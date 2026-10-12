@@ -1,4 +1,3 @@
-
 import os
 from datetime import datetime, timezone
 import numpy as np
@@ -240,7 +239,9 @@ if page=="🧪 Guided Experiment":
         if st.button("Reveal real-axis segments",key="reveal_real"):
             labels=[]
             for a,b in segments:
-                labels.append(f"{'-∞' if np.isneginf(a) else a:g} to {'∞' if np.isposinf(b) else b:g}")
+                left = "-∞" if np.isneginf(a) else f"{a:g}"
+                right = "∞" if np.isposinf(b) else f"{b:g}"
+                labels.append(f"{left} to {right}")
             st.success("Real-axis segments: "+(", ".join(labels) if labels else "None"))
 
     with tabs[2]:
@@ -288,55 +289,57 @@ if page=="🧪 Guided Experiment":
         st.metric("Current stability", "STABLE" if stable(cp) else "UNSTABLE / BOUNDARY")
         st.info("Challenge: move K until a pair of poles approaches the imaginary axis. Record the approximate K and compare it with your Step 5 prediction.")
 
-    st.markdown("---")
-    st.subheader("🧠 Concept Check")
-    with st.form("concept_check"):
-        a,b=st.columns(2)
-        with a:
-            q1=st.radio("1. At K = 0, closed-loop poles are located at:",["Open-loop poles","Open-loop zeros","Origin only"])
-            q2=st.radio("2. For real-coefficient systems, the root locus is symmetric about:",["Real axis","Imaginary axis","Neither"])
-        with b:
-            q3=st.radio("3. Stable continuous-time poles must lie in:",["LHP","RHP","Only on imaginary axis"])
-            q4=st.radio("4. Increasing K causes closed-loop poles to:",["Move along root-locus branches","Remain fixed","Become zeros"])
-        check=st.form_submit_button("Check my answers")
-        if check:
-            answers=[q1=="Open-loop poles",q2=="Real axis",q3=="LHP",q4=="Move along root-locus branches"]
-            score=sum(answers)
-            if score==4: st.success("4/4 correct — excellent.")
-            else: st.warning(f"{score}/4 correct. Revisit the relevant step and try again.")
+        st.markdown("---")
+        st.subheader("🧠 Concept Check")
+        with st.form("concept_check"):
+            a,b=st.columns(2)
+            with a:
+                q1=st.radio("1. At K = 0, closed-loop poles are located at:",["Open-loop poles","Open-loop zeros","Origin only"])
+                q2=st.radio("2. For real-coefficient systems, the root locus is symmetric about:",["Real axis","Imaginary axis","Neither"])
+            with b:
+                q3=st.radio("3. Stable continuous-time poles must lie in:",["LHP","RHP","Only on imaginary axis"])
+                q4=st.radio("4. Increasing K causes closed-loop poles to:",["Move along root-locus branches","Remain fixed","Become zeros"])
+            check=st.form_submit_button("Check my answers")
+            if check:
+                answers=[q1=="Open-loop poles",q2=="Real axis",q3=="LHP",q4=="Move along root-locus branches"]
+                score=sum(answers)
+                if score==4: st.success("4/4 correct — excellent.")
+                else: st.warning(f"{score}/4 correct. Revisit the relevant step and try again.")
 
-    st.subheader("📝 Submit Guided Experiment")
-    with st.form("submission",clear_on_submit=True):
-        a,b=st.columns(2)
-        with a: name=st.text_input("Student name *")
-        with b: roll=st.text_input("Roll number / ID *")
-        prediction=st.text_area("1. What did you predict about pole movement?")
-        real_rule=st.text_area("2. Explain the real-axis rule in your own words.")
-        asym=st.text_area("3. What did you learn from the asymptotes/centroid?")
-        breakaway=st.text_area("4. What did you learn from breakaway analysis?")
-        stability=st.text_area("5. State your predicted and verified stable K range.")
-        reflection=st.text_area("6. What engineering insight did this experiment give you?")
-        submit=st.form_submit_button("Submit learning experiment",type="primary")
-        if submit:
-            if not name.strip() or not roll.strip(): st.error("Enter student name and roll number.")
-            else:
-                ranges=stable_range(num,den,200)
-                row={
-                    "submitted_at":datetime.now(timezone.utc).isoformat(),
-                    "student_name":name.strip(),"roll_no":roll.strip(),
-                    "experiment":"Guided Root Locus Learning Experiment",
-                    "numerator":",".join(f"{x:g}" for x in num),
-                    "denominator":",".join(f"{x:g}" for x in den),
-                    "predicted_poles":guess_poles,"predicted_zeros":guess_zeros,
-                    "predicted_real_axis":user_seg,"predicted_centroid":float(pred_cent),
-                    "predicted_stable_range":user_range,
-                    "prediction":prediction.strip(),"real_axis_explanation":real_rule.strip(),
-                    "asymptote_learning":asym.strip(),"breakaway_learning":breakaway.strip(),
-                    "stability_conclusion":stability.strip(),"reflection":reflection.strip(),
-                    "verified_stable_region":", ".join(f"{a:g} to {b:g}" for a,b in ranges) if ranges else "None",
-                    "concept_score":None
-                }
-                if save_row(row): st.success("Submitted successfully. The guided workbook is cleared for the next student.")
+        st.subheader("📝 Submit Guided Experiment")
+        with st.form("submission",clear_on_submit=True):
+            a,b=st.columns(2)
+            with a: name=st.text_input("Student name *")
+            with b: roll=st.text_input("Roll number / ID *")
+            prediction=st.text_area("1. What did you predict about pole movement?")
+            real_rule=st.text_area("2. Explain the real-axis rule in your own words.")
+            asym=st.text_area("3. What did you learn from the asymptotes/centroid?")
+            breakaway=st.text_area("4. What did you learn from breakaway analysis?")
+            stability=st.text_area("5. State your predicted and verified stable K range.")
+            reflection=st.text_area("6. What engineering insight did this experiment give you?")
+            submit=st.form_submit_button("Submit learning experiment",type="primary")
+            if submit:
+                if not name.strip() or not roll.strip(): st.error("Enter student name and roll number.")
+                else:
+                    ranges=stable_range(num,den,200)
+                    row={
+                        "submitted_at":datetime.now(timezone.utc).isoformat(),
+                        "student_name":name.strip(),"roll_no":roll.strip(),
+                        "experiment":"Guided Root Locus Learning Experiment",
+                        "numerator":",".join(f"{x:g}" for x in num),
+                        "denominator":",".join(f"{x:g}" for x in den),
+                        "predicted_poles":guess_poles,"predicted_zeros":guess_zeros,
+                        "predicted_real_axis":user_seg,"predicted_centroid":float(pred_cent),
+                        "predicted_stable_range":user_range,
+                        "prediction":prediction.strip(),"real_axis_explanation":real_rule.strip(),
+                        "asymptote_learning":asym.strip(),"breakaway_learning":breakaway.strip(),
+                        "stability_conclusion":stability.strip(),"reflection":reflection.strip(),
+                        "verified_stable_region":", ".join(f"{a:g} to {b:g}" for a,b in ranges) if ranges else "None",
+                        "concept_score":None
+                    }
+                    if save_row(row): st.success("Submitted successfully. The guided workbook is cleared for the next student.")
+
+
 
 elif page=="📘 Student Workbook":
     st.subheader("📘 Guided Root Locus Workbook")
